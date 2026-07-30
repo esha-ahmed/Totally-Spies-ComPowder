@@ -4,10 +4,10 @@
 #include <Arduino.h>
 #include <lvgl.h>
 
-// Ogni app espone: una funzione "create" che costruisce la lv_obj_t schermo
-// (chiamata una sola volta in setup), e una funzione "update" chiamata ad
-// ogni giro di loop() per animazioni/logica time-based. Le update fanno
-// nulla se la loro schermata non è quella attiva, per non sprecare cicli.
+// Each app exposes: a "create" function that builds the lv_obj_t screen
+// (only a single voltage in setup), and an "update" function can be
+// performed using the loop() function for time based animation/logic. Updates do 
+// nothing if their screen is not the active one, so as not to waste cycles.
 
 lv_obj_t *radarApp_create();
 void radarApp_update(unsigned long now);
@@ -18,8 +18,9 @@ void musicApp_update(unsigned long now);
 lv_obj_t *netscanApp_create();
 void netscanApp_update(unsigned long now);
 
-// Orologio: la lettura I2C dell'RTC resta nel .ino (già gestisce Wire per
-// il touch), qui esponiamo solo il "setter" che aggiorna le lancette.
+// Clock: the I2C reading of the RTC remains in the .ino (it already manages
+// Wire for the touch), here we only expose the "setter" that updates the hands.
+
 lv_obj_t *clockApp_create();
 void clockApp_setTime(int hour, int minute, int second, int day, int month, int year);
 

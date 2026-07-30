@@ -1,20 +1,20 @@
 # Totally-Spies-ComPowder
 
-A DIY smartwatch-style handheld built around an ESP32-S3 and a 1.28" round touch display, housed in a custom 3D-printed clamshell case inspired by the "Compowder" from *Totally Spies*.
+A DIY smartwatch style handheld built around an ESP32-S3 and a 1.28" round touch display, housed in a custom 3D-printed clamshell case inspired by the "Compowder" from *Totally Spies*.
 
 ![status](https://img.shields.io/badge/status-in%20progress-yellow)
 ![platform](https://img.shields.io/badge/platform-ESP32--S3-blue)
 
 ## Overview
 
-ComPowder is a pocket-sized, app-based device with a circular touchscreen UI, physical buttons, capacitive touch gestures, and an IMU for gesture input — all packed into a round clamshell enclosure that opens like a compact mirror. The firmware is built around [LVGL](https://lvgl.io/) for a fluid, app-switching interface.
+ComPowder is a pocket sized, app based device with a circular touchscreen UI, physical buttons, capacitive touch gestures, and an IMU for gesture input, all packed into a round clamshell enclosure that opens like a compact mirror. The firmware is built around [LVGL](https://lvgl.io/) for a fluid, app-switching interface.
 
 ## Hardware
 
-- **MCU**: ESP32-S3 (N16R8 — 16MB flash / 8MB PSRAM)
+- **MCU**: ESP32-S3 (N16R8 16MB flash / 8MB PSRAM)
 - **Display**: 1.28" round TFT, GC9A01 driver, 240×240, SPI
 - **Touch**: Capacitive touch controller (I2C)
-- **IMU**: QMI8658 (I2C) — for wrist-gesture input
+- **IMU**: QMI8658 (I2C) for wrist gesture input
 - **Input**: 3 physical side buttons + touchscreen
 - **Audio**: Speaker output (planned)
 - **LEDs**: 2× WS2812 addressable RGB
@@ -41,14 +41,14 @@ ComPowder is a pocket-sized, app-based device with a circular touchscreen UI, ph
 
 - Arduino IDE, ESP32 core (Espressif Arduino-ESP32)
 - [LVGL](https://github.com/lvgl/lvgl) — UI framework
-- [Adafruit GC9A01A](https://github.com/adafruit/Adafruit_GC9A01A) / Arduino_GFX — display driver
-- [Adafruit NeoPixel](https://github.com/adafruit/Adafruit_NeoPixel) — RGB LED control
+- [Adafruit GC9A01A](https://github.com/adafruit/Adafruit_GC9A01A) / Arduino_GFX display driver
+- [Adafruit NeoPixel](https://github.com/adafruit/Adafruit_NeoPixel) RGB LED control
 
 ## Apps
 
-- **Radar** — animated scanning UI (WiFi/BLE nearby-device signal strength mapping, in progress)
-- **Net Scanner** — visualizes WiFi routers and BLE devices around you on the round display, showing signal strength to help find dead zones
-- **Spotify Remote** — play/pause/skip via touch, volume control via wrist-tilt (IMU), using the Spotify Web API over WiFi (BLE media control isn't possible on ESP32-S3, which lacks Bluetooth Classic/AVRCP)
+- **Radar**: animated scanning UI (WiFi/BLE nearby-device signal strength mapping, in progress)
+- **Net Scanner**: visualizes WiFi routers and BLE devices around you on the round display, showing signal strength to help find dead zones
+- **Spotify Remote**: play/pause/skip via touch, volume control via wrist-tilt (IMU), using the Spotify Web API over WiFi (BLE media control isn't possible on ESP32-S3, which lacks Bluetooth Classic/AVRCP)
 
 ## 3D-Printed Case
 

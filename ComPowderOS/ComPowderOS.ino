@@ -1,27 +1,18 @@
 /*******************************************************************************
-  ComPowder OS — shell LVGL per ESP32S3-128SPIT (GC9A01 1.28" + CST816S)
+  ComPowder OS — shell LVGL for ESP32S3-128SPIT (GC9A01 1.28" + CST816S)
 
-  Basato sul tuo sketch funzionante: stessi pin, stesso bus SPI, stesso
-  mapping registri touch. La differenza è che ora il rendering delle "app"
-  passa da gfx->drawXXX diretto a widget LVGL, gestiti da uno screen-manager
-  che cambia schermata con swipe (gesture I2C, come nel tuo codice) o
-  pulsanti fisici.
-
-  Librerie richieste (stesse versioni del pacchetto del produttore):
-    Arduino_GFX_Library   1.4.7
-    lvgl                  8.3.6   <-- IMPORTANTE: usa la 8.3.x, non la 9.x
+Libraries required (same versions of the manufacturer's package):
+Arduino_GFX_Library   1.4.7
+    lvgl                  8.3.6   <-- IMPORTANT: use the 8.3.x, not the 9.x
     Adafruit_NeoPixel     1.12.5
 
-  Impostazioni scheda Arduino IDE (dal manuale del produttore):
+  Arduino IDE board settings (from the manufacturer's manual):
     Board: ESP32S3 Dev Module
     USB CDC On Boot: Enabled
     Flash Mode: QIO 80MHz
     Flash Size: 16MB (128Mb)
     Partition Scheme: 16M Flash (3MB APP/9.9MB FATFS)
     PSRAM: OPI PSRAM
-
-  Copia lv_conf.h nella cartella del tuo sketchbook /libraries (accanto a
-  dove estrai la libreria lvgl) oppure segui le istruzioni nel README.
 *******************************************************************************/
 
 #include <Arduino_GFX_Library.h>
@@ -46,7 +37,7 @@
 #define TOUCH_ADDR 0x15
 
 // ================== PIN RTC ==================
-#define RTC_ADDR   0x51   // PCF85063, stesso bus I2C del touch
+#define RTC_ADDR   0x51   // PCF85063, Same I2C bus as touch
 
 // ================== PIN PULSANTI FISICI ==================
 #define SW_UP      14
@@ -57,7 +48,7 @@
 #define LED_PIN    46
 #define NUM_LEDS   2
 
-// ================== COLORI (RGB565, come nel tuo sketch originale) ==================
+// ================== COLORS (RGB565) ==================
 #define BLACK   0x0000
 #define WHITE   0xFFFF
 
@@ -70,18 +61,18 @@ Adafruit_NeoPixel pixels(NUM_LEDS, LED_PIN, NEO_GRB + NEO_KHZ800);
 static const uint32_t SCREEN_W = 240;
 static const uint32_t SCREEN_H = 240;
 static lv_disp_draw_buf_t draw_buf;
-// 20 righe di buffer: buon compromesso fluidità/RAM su questa board
+// 20 rows of buffer: good fluidity/RAM compromise on this board
 static lv_color_t *buf1;
 static lv_disp_drv_t disp_drv;
 static lv_indev_drv_t indev_drv;
 
-// ================== STATO TOUCH ==================
+// ================== TOUCH STATUS ==================
 volatile bool touchIntFlag = false;
 static lv_coord_t lastTouchX = 0, lastTouchY = 0;
 static bool touchPressed = false;
 
 // ================== APP MANAGER ==================
-// Ordine di navigazione (swipe sinistra = avanti, destra = indietro)
+// Navigation order (swipe left = forward, right = backward)
 enum AppId { APP_RADAR = 0, APP_MUSIC, APP_NETSCAN, APP_CLOCK, APP_COUNT };
 static lv_obj_t *screens[APP_COUNT];
 static int currentApp = APP_RADAR;
@@ -101,11 +92,11 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
   lv_disp_flush_ready(disp);
 }
 
-// ================== TOUCH: lettura combinata gesture + coordinate ==================
-// Stesso registro/burst-read del tuo sketch originale (parte da 0x01, 6 byte):
+// ================== TOUCH: Combined reading gesture + coordinates ==================
+// Same register/burst-read as your original sketch (starts from 0x01, 6 bytes):
 // [0]=gesture [1]=points [2]=x_high [3]=x_low [4]=y_high [5]=y_low
 static unsigned long lastGestureNav = 0;
-const long gestureNavCooldown = 450; // ms — il CST816S manda più INT per un solo swipe, senza questo la app "salta" più schermate a ogni gesto
+const long gestureNavCooldown = 450; // ms — the CST816S sends more INT for a single swipe, without this the app "skips" more screens with each gesture
 
 static void readTouchController() {
   Wire.beginTransmission(TOUCH_ADDR);
@@ -126,16 +117,16 @@ static void readTouchController() {
 
   unsigned long now = millis();
   if ((gesture == 0x03 || gesture == 0x04) && (now - lastGestureNav < gestureNavCooldown)) {
-    return; // stesso swipe, evento ripetuto: ignora
+    return; // Same swipe, repeated event: ignore
   }
 
-  if (gesture == 0x03) {          // swipe sinistra -> prossima app
+  if (gesture == 0x03) {          // Swipe left -> next app
     nextApp();
     lastGestureNav = now;
-  } else if (gesture == 0x04) {   // swipe destra -> app precedente
+  } else if (gesture == 0x04) {   // Swipe right -> previous app
     prevApp();
     lastGestureNav = now;
-  } else if (points > 0) {        // tap/pressione -> inoltra a LVGL
+  } else if (points > 0) {        // Tap/press -> forward to LVGL
     lastTouchX = constrain(x, 0, (int)SCREEN_W - 1);
     lastTouchY = constrain(y, 0, (int)SCREEN_H - 1);
     touchPressed = true;
@@ -152,23 +143,23 @@ void my_touch_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *data) {
   data->point.x = lastTouchX;
   data->point.y = lastTouchY;
   data->state = touchPressed ? LV_INDEV_STATE_PR : LV_INDEV_STATE_REL;
-  // Il tap è un evento singolo: dopo averlo consumato, rilascia
+  // The tap is a single event: after consuming it, release
   if (touchPressed) touchPressed = false;
 }
 
 void IRAM_ATTR touchISR() { touchIntFlag = true; }
 
 // ================== RTC PCF85063 ==================
-// Mappatura registri identica a quella usata dal produttore nel firmware
-// di test: 0x04 sec, 0x05 min, 0x06 ore, 0x07 giorno, 0x08 giorno settimana,
-// 0x09 mese, 0x0A anno — tutti in BCD tranne il giorno della settimana.
+// Log mapping identical to that used by the manufacturer in the firmware
+// Of test: 0x04 sec, 0x05 min, 0x06 hours, 0x07 day, 0x08 day week,
+// 0x09 month, 0x0A year — all in BCD except the day of the week.
 
-// ---- Imposta a 1 SOLO per il caricamento in cui vuoi settare l'ora,
-//      poi rimettilo a 0 e ricarica lo sketch (l'RTC è a batteria tampone
-//      e mantiene l'ora anche senza alimentazione principale). ----
+// ---- Set to 1 ONLY for the load in which you want to set the time,
+//      Then put it back to 0 and reload the sketch (the RTC is battery-powered
+//      And keeps the time even without the main power supply). ----
 #define SET_RTC_ON_BOOT 0
 #if SET_RTC_ON_BOOT
-  // Modifica questi valori con data/ora attuali prima di caricare
+  // Change these values with current date/time before loading
   static const int SET_YEAR = 26, SET_MONTH = 7, SET_DAY = 11;
   static const int SET_WEEKDAY = 5; // 0=Lun ... 6=Dom
   static const int SET_HOUR = 18, SET_MINUTE = 30, SET_SECOND = 0;
@@ -204,14 +195,14 @@ void rtcInit() {
   Serial.println("RTC: ora impostata da SET_RTC_ON_BOOT — ricordati di rimetterlo a 0!");
 #endif
 
-  // Difensivo, eseguito SEMPRE (anche a SET_RTC_ON_BOOT=0):
-  // 1) Control_1 (0x00) = 0x00 -> garantisce STOP=0 (oscillatore in marcia) e modalità 24h.
-  //    Se lo STOP bit fosse rimasto a 1 da un boot precedente, l'orologio resta congelato
-  //    su un orario fisso esattamente come descritto: questo lo sblocca.
+  // Defensive, ALWAYS executed (also at SET_RTC_ON_BOOT=0):
+  // 1) Control_1 (0x00) = 0x00 -> guarantees STOP=0 (oscillator in motion) and 24h mode.
+  //    If the STOP bit had remained at 1 from a previous boot, the clock remains frozen
+  //    On a fixed time exactly as described: this unlocks it.
   rtcWriteReg(0x00, 0x00);
 
-  // 2) Pulisce il flag OS (bit7 del registro secondi) senza toccare il valore dei secondi,
-  //    così un eventuale "integrity not guaranteed" dal power-on non blocca nulla.
+  // 2) Cleans the OS flag (bit7 of the record seconds) without touching the value of the seconds,
+  //    So a possible "integrity not guaranteed" from the power-on does not block anything.
   uint8_t sec = rtcReadReg(0x04);
   rtcWriteReg(0x04, sec & 0x7F);
 }
@@ -225,7 +216,7 @@ void rtcReadTime(int &hour, int &minute, int &second, int &day, int &month, int 
   year   = fromBCD(rtcReadReg(0x0A), 0xF0);
 }
 
-// ================== PULSANTI FISICI ==================
+// ================== PHYSICAL BUTTONS ==================
 unsigned long lastButtonPress = 0;
 const long debounceDelay = 220;
 
@@ -247,12 +238,12 @@ void handlePhysicalButtons(unsigned long now) {
 void setup() {
   Serial.begin(115200);
 
-  // Pulsanti
+  // Buttons
   pinMode(SW_UP, INPUT_PULLUP);
   pinMode(SW_PW, INPUT_PULLUP);
   pinMode(SW_DOWN, INPUT_PULLUP);
 
-  // LED stato
+  // LED status
   pixels.begin();
   pixels.setBrightness(80);
   pixels.setPixelColor(0, pixels.Color(255, 20, 147));
@@ -282,7 +273,7 @@ void setup() {
 
   buf1 = (lv_color_t *)heap_caps_malloc(SCREEN_W * 20 * sizeof(lv_color_t), MALLOC_CAP_DMA);
   if (!buf1) {
-    Serial.println("ERRORE: allocazione buffer LVGL fallita! Controlla che PSRAM sia OPI PSRAM in Strumenti.");
+    Serial.println("ERROR: LVGL buffer allocation failed! Check that PSRAM is OPI PSRAM in Tools.");
     while (1) delay(1000);
   }
   lv_disp_draw_buf_init(&draw_buf, buf1, NULL, SCREEN_W * 20);
@@ -299,7 +290,7 @@ void setup() {
   indev_drv.read_cb = my_touch_read;
   lv_indev_drv_register(&indev_drv);
 
-  // Costruzione delle app come schermate LVGL indipendenti
+  // Construction of apps as independent LVGL screens
   screens[APP_RADAR]   = radarApp_create();
   screens[APP_MUSIC]    = musicApp_create();
   screens[APP_NETSCAN]  = netscanApp_create();
@@ -317,7 +308,7 @@ void loop() {
   unsigned long now = millis();
   handlePhysicalButtons(now);
 
-  // Aggiorna le animazioni specifiche di ogni app (radar sweep, spectrum, ecc.)
+  // Update the specific animations of each app (radar sweep, spectrum, etc.)
   radarApp_update(now);
   musicApp_update(now);
   netscanApp_update(now);

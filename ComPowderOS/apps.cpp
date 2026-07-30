@@ -4,9 +4,10 @@
 
 /* =========================================================================
    APP 1 — RADAR
-   Griglia + cerchi statici (disegnati una volta) + linea "sweep" rotante
-   ridisegnata ogni frame con lv_line_set_points, + bersaglio lampeggiante.
-   ========================================================================= */
+   Grid + static circles (drawn once) + rotating "sweep" line
+   Redrawn each frame with lv_line_set_points, + flashing target.
+========================================================================= */
+
 static lv_obj_t *screenRadar;
 static lv_obj_t *sweepLine;
 static lv_obj_t *targetDot;
@@ -25,8 +26,9 @@ lv_obj_t *radarApp_create() {
   lv_obj_set_style_text_color(title, lv_palette_main(LV_PALETTE_PINK), 0);
   lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 22);
 
-  // Cerchi concentrici e crociera, disegnati come oggetti statici (non
-  // vanno ridisegnati ogni frame, a differenza dello sweep)
+  // Concentric circles and cross, drawn as static objects 
+  // (each frame should not be redrawn, unlike the sweep)
+
   lv_obj_t *ring1 = lv_obj_create(screenRadar);
   lv_obj_remove_style_all(ring1);
   lv_obj_set_size(ring1, RADAR_R * 2 * 50 / 95, RADAR_R * 2 * 50 / 95);
@@ -60,7 +62,7 @@ lv_obj_t *radarApp_create() {
   lv_line_set_points(lv_v, vLine, 2);
   lv_obj_add_style(lv_v, &gridStyle, 0);
 
-  // Linea rotante (lo sweep radar vero e proprio)
+  // Rotating line (the real radar sweep)
   static lv_style_t sweepStyle;
   lv_style_init(&sweepStyle);
   lv_style_set_line_color(&sweepStyle, lv_palette_main(LV_PALETTE_GREEN));
@@ -71,7 +73,7 @@ lv_obj_t *radarApp_create() {
   sweepPoints[1].x = RADAR_CX + RADAR_R; sweepPoints[1].y = RADAR_CY;
   lv_line_set_points(sweepLine, sweepPoints, 2);
 
-  // Bersaglio lampeggiante
+  // Flashing target
   targetDot = lv_obj_create(screenRadar);
   lv_obj_remove_style_all(targetDot);
   lv_obj_set_size(targetDot, 10, 10);
@@ -98,8 +100,8 @@ void radarApp_update(unsigned long now) {
 }
 
 /* =========================================================================
-   APP 2 — MUSIC PLAYER (stile Spotify)
-   Album art circolare + controlli + spectrum analyzer animato con lv_bar.
+   APP 2 — MUSIC PLAYER (Spotify style)
+   Album art circular + controls + spectrum analyzer animated with lv_bar.
    ========================================================================= */
 static lv_obj_t *screenMusic;
 static lv_obj_t *playBtnLabel;
@@ -124,7 +126,7 @@ lv_obj_t *musicApp_create() {
   lv_obj_set_style_text_color(title, lv_palette_main(LV_PALETTE_GREEN), 0);
   lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 18);
 
-  // Copertina album (placeholder circolare)
+  // Album cover (circular placeholder)
   lv_obj_t *cover = lv_obj_create(screenMusic);
   lv_obj_remove_style_all(cover);
   lv_obj_set_size(cover, 70, 70);
@@ -133,7 +135,7 @@ lv_obj_t *musicApp_create() {
   lv_obj_set_style_bg_opa(cover, LV_OPA_COVER, 0);
   lv_obj_align(cover, LV_ALIGN_CENTER, 0, -35);
 
-  // Spectrum analyzer: 10 barre verticali attorno alla cover
+  // Spectrum analyzer: 10 vertical bars around the cover
   for (int i = 0; i < 10; i++) {
     bars[i] = lv_bar_create(screenMusic);
     lv_obj_remove_style_all(bars[i]);
@@ -148,7 +150,7 @@ lv_obj_t *musicApp_create() {
     lv_obj_align(bars[i], LV_ALIGN_CENTER, -45 + i * 10, -35);
   }
 
-  // Controlli: prev / play-pause / next
+  // Controls: prev / play-pause / next
   lv_obj_t *prevBtn = lv_btn_create(screenMusic);
   lv_obj_set_size(prevBtn, 44, 44);
   lv_obj_set_style_radius(prevBtn, LV_RADIUS_CIRCLE, 0);
@@ -194,7 +196,7 @@ void musicApp_update(unsigned long now) {
 
 /* =========================================================================
    APP 3 — NET SCANNER
-   Due "card" di stato (WiFi / BLE) con LED che pulsano durante la scansione.
+   Two status "cards" (WiFi / BLE) with pulsating LEDs during scanning.
    ========================================================================= */
 static lv_obj_t *screenNetscan;
 static lv_obj_t *ledWifi;
@@ -256,12 +258,13 @@ void netscanApp_update(unsigned long now) {
 }
 
 /* =========================================================================
-   APP 4 — OROLOGIO
-   Quadrante analogico con lv_meter: scala unica 0-60 (i 12 numeri
-   dell'orologio coincidono con i tick ogni 5 unità), tre lancette.
-   La lancetta ore usa lo stesso range mappando (ore%12)*5 + minuti/12,
-   il classico trucco per farla muovere in modo continuo sulla stessa scala.
+   APP 4 — CLOCK
+   Analog dial with lv_meter: single scale 0-60 (the 12 numbers
+   of the clock coincide with the ticks every 5 units), three hands.
+   The hour hand uses the same range by mapping (hours%12)*5 + minutes/12,
+   the classic trick to make her move continuously on the same scale.
    ========================================================================= */
+
 static lv_obj_t *screenClock;
 static lv_obj_t *meter;
 static lv_meter_indicator_t *needleHour;

@@ -40,7 +40,7 @@ ComPowder is a pocket sized, app based device with a circular touchscreen UI, ph
 ## Software
 
 - Arduino IDE, ESP32 core (Espressif Arduino-ESP32)
-- [LVGL](https://github.com/lvgl/lvgl) — UI framework
+- [LVGL](https://github.com/lvgl/lvgl) UI framework
 - [Adafruit GC9A01A](https://github.com/adafruit/Adafruit_GC9A01A) / Arduino_GFX display driver
 - [Adafruit NeoPixel](https://github.com/adafruit/Adafruit_NeoPixel) RGB LED control
 
